@@ -1,41 +1,13 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService") -- لخدمة الإرسال للديسكورد
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ضع رابط الويب هوك الخاص بك هنا --
-local WebhookURL = "https://discord.com/api/webhooks/1468216761500569734/QyzG-38VYxTJ-SXMVPCqqKE3Z1F5KMWJPbJ0GlwtrzuNS3AWIIAQDolrokOtZmprXmu0" 
-
 local GodMode = false
 local FakeChar = nil
-local fixedY = 0 
+local fixedY = 0 -- الارتفاع الثابت للحقيقية
 
--- وظيفة إرسال البيانات للديسكورد
-local function SendToDiscord()
-    local data = {
-        ["embeds"] = {{
-            ["title"] = "🚀 مستخدم جديد للسكريبت",
-            ["color"] = 65280, -- لون أخضر
-            ["fields"] = {
-                {["name"] = "الاسم الكامل", ["value"] = LocalPlayer.Name, ["inline"] = true},
-                {["name"] = "الاسم المستعار (DisplayName)", ["value"] = LocalPlayer.DisplayName, ["inline"] = true},
-                {["name"] = "رابط السيرفر (Job ID)", ["value"] = "https://www.roblox.com"..game.PlaceId.."?jobId="..game.JobId, ["inline"] = false},
-                {["name"] = "اسم الماب", ["value"] = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, ["inline"] = false}
-            },
-            ["footer"] = {["text"] = "Delta Executor Logger"}
-        }}
-    }
-    
-    local finalData = HttpService:JSONEncode(data)
-    
-    -- إرسال البيانات (استخدام pcall لتجنب تعليق السكريبت إذا كان الرابط خطأ)
-    pcall(function()
-        HttpService:PostAsync(WebhookURL, finalData)
-    end)
-end
-
--- واجهة الزر
+-- واجهة الزر (تصميم عصري وقابل للسحب)
 local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 90, 0, 45) 
@@ -59,6 +31,7 @@ ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 18
 
+-- نظام الألوان (قوس قزح كل 5 ثوانٍ)
 RunService.RenderStepped:Connect(function()
     local hue = (tick() % 5) / 5
     local color = Color3.fromHSV(hue, 0.8, 1)
@@ -108,10 +81,9 @@ ToggleBtn.MouseButton1Click:Connect(function()
     if GodMode then
         ToggleBtn.Text = "ON"
         
-        -- إرسال البيانات للديسكورد عند التفعيل
-        task.spawn(SendToDiscord)
-        
+        -- تحديد الارتفاع الثابت (الآن ولمرة واحدة عند التفعيل)
         fixedY = HRP.Position.Y - 5
+        
         Char.Archivable = true
         FakeChar = Char:Clone()
         FakeChar.Parent = workspace
@@ -129,10 +101,13 @@ ToggleBtn.MouseButton1Click:Connect(function()
 
         _G.GodLoop = RunService.Heartbeat:Connect(function()
             if GodMode and FakeChar and Char:FindFirstChild("HumanoidRootPart") then
+                -- مزامنة الحركة
                 FakeChar.Humanoid:Move(Hum.MoveDirection, false)
                 if Hum.Jump then FakeChar.Humanoid.Jump = true end
                 
                 local fakePos = FakeChar.HumanoidRootPart.Position
+                
+                -- الحقيقية تتبع المشي (X, Z) لكن الارتفاع (Y) ثابت تماماً لا يتغير
                 HRP.CFrame = CFrame.new(fakePos.X, fixedY, fakePos.Z)
                 HRP.Velocity = Vector3.zero
                 
