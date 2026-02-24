@@ -15,7 +15,6 @@ local function FullCleanUp()
     if Char and Char:FindFirstChild("HumanoidRootPart") and _G.CurrentFakeChar then
         local FakeHRP = _G.CurrentFakeChar:FindFirstChild("HumanoidRootPart")
         if FakeHRP then
-            -- النقل اللحظي لمكان وسرعة الشخصية المزيفة
             Char.HumanoidRootPart.CFrame = FakeHRP.CFrame
             Char.HumanoidRootPart.Velocity = FakeHRP.Velocity 
         end
@@ -44,7 +43,7 @@ end
 local GodMode = false
 local FakeChar = nil
 local FIXED_HEIGHT = -2.75 
-local VERSION_TEXT = "v1.0" -- رجعناها لعيونك
+local VERSION_TEXT = "v1.0"
 local OFFSET_DISTANCE = 4 
 
 -- UI Setup
@@ -79,6 +78,7 @@ CodeBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 Instance.new("UICorner", CodeBox)
 
+-- زر LOGIN الأساسي
 local LoginBtn = Instance.new("TextButton", LoginFrame)
 LoginBtn.Size = UDim2.new(0.85, 0, 0, 35)
 LoginBtn.Position = UDim2.new(0.075, 0, 0.75, 0)
@@ -87,6 +87,27 @@ LoginBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 LoginBtn.Font = Enum.Font.GothamBold
 Instance.new("UICorner", LoginBtn)
+
+-- [ التعديل: إضافة زر تخطي الكود للشخص المحدد فقط ] --
+if LocalPlayer.Name == "hhjjkkllppp098" then
+    -- تعديل حجم زر اللوجن ليصبح أصغر ويترك مساحة
+    LoginBtn.Size = UDim2.new(0.4, 0, 0, 35)
+    LoginBtn.Position = UDim2.new(0.075, 0, 0.75, 0)
+
+    local SkipBtn = Instance.new("TextButton", LoginFrame)
+    SkipBtn.Size = UDim2.new(0.4, 0, 0, 35)
+    SkipBtn.Position = UDim2.new(0.525, 0, 0.75, 0)
+    SkipBtn.Text = "SKIP CODE"
+    SkipBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0) -- لون أخضر للتمييز
+    SkipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SkipBtn.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", SkipBtn)
+
+    SkipBtn.MouseButton1Click:Connect(function()
+        LoginFrame.Visible = false
+        ScreenGui:FindFirstChild("Frame").Visible = true -- يفتح قائمة الـ Toggle
+    end)
+end
 
 -- Main Toggle Button
 local MainFrame = Instance.new("Frame", ScreenGui)
@@ -142,6 +163,43 @@ local function ToggleGodMode()
         _G.CurrentFakeChar = FakeChar
         FakeChar.Parent = workspace
         FakeChar.HumanoidRootPart.CFrame = HRP.CFrame
+        setProperties(Char, true)
+        Camera.CameraSubject = FakeChar.Humanoid
+
+        _G.GodLoop = RunService.Heartbeat:Connect(function()
+            if GodMode and FakeChar and Char:FindFirstChild("HumanoidRootPart") then
+                FakeChar.Humanoid:Move(Hum.MoveDirection, false)
+                if Hum.Jump then FakeChar.Humanoid.Jump = true end
+                
+                local fakeHRP = FakeChar.HumanoidRootPart
+                HRP.Velocity = fakeHRP.Velocity 
+                HRP.CFrame = CFrame.new(fakeHRP.Position.X + OFFSET_DISTANCE, FIXED_HEIGHT, fakeHRP.Position.Z)
+            end
+        end)
+    else
+        ToggleBtn.Text = "STATUS: OFF\n" .. VERSION_TEXT .. " [Q]"
+        FullCleanUp()
+    end
+end
+
+ToggleBtn.MouseButton1Click:Connect(ToggleGodMode)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.Q then
+        if MainFrame.Visible then ToggleGodMode() end
+    end
+end)
+
+LoginBtn.MouseButton1Click:Connect(function()
+    if CodeBox.Text == "OMARTSOO-188HOKIJ" then
+        LoginFrame.Visible = false
+        MainFrame.Visible = true
+    else
+        LoginBtn.Text = "INVALID CODE"
+        task.wait(1)
+        LoginBtn.Text = "LOGIN"
+    end
+end)
         setProperties(Char, true)
         Camera.CameraSubject = FakeChar.Humanoid
 
