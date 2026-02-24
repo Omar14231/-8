@@ -1,0 +1,168 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local GodMode = false
+local FakeChar = nil
+local FIXED_HEIGHT = -2.75 
+local VERSION_TEXT = "v1.0"
+local OFFSET_DISTANCE = 4 -- المسافة التي ستبتعدها الشخصية الحقيقية لليمين لتجنب التعليق
+
+-- UI Setup
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+
+-- Login Frame
+local LoginFrame = Instance.new("Frame", ScreenGui)
+LoginFrame.Size = UDim2.new(0, 280, 0, 180)
+LoginFrame.Position = UDim2.new(0.5, -140, 0.4, 0)
+LoginFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+LoginFrame.Active = true
+LoginFrame.Draggable = true
+local LoginCorner = Instance.new("UICorner", LoginFrame)
+local LoginStroke = Instance.new("UIStroke", LoginFrame)
+LoginStroke.Thickness = 2
+
+-- Close Button (X)
+local CloseBtn = Instance.new("TextButton", LoginFrame)
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.Text = "X"
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", CloseBtn)
+CloseBtn.MouseButton1Click:Connect(function() LoginFrame.Visible = false end)
+
+local CodeBox = Instance.new("TextBox", LoginFrame)
+CodeBox.Size = UDim2.new(0.85, 0, 0, 40)
+CodeBox.Position = UDim2.new(0.075, 0, 0.35, 0)
+CodeBox.PlaceholderText = "Enter Access Code..."
+CodeBox.Text = ""
+CodeBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+CodeBox.Font = Enum.Font.GothamSemibold
+Instance.new("UICorner", CodeBox)
+
+local LoginBtn = Instance.new("TextButton", LoginFrame)
+LoginBtn.Size = UDim2.new(0.85, 0, 0, 35)
+LoginBtn.Position = UDim2.new(0.075, 0, 0.65, 0)
+LoginBtn.Text = "LOGIN"
+LoginBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoginBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", LoginBtn)
+
+-- Main Toggle Button
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 110, 0, 50) 
+MainFrame.Position = UDim2.new(0.9, -110, 0.2, 0) 
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true 
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Thickness = 3
+
+local ToggleBtn = Instance.new("TextButton", MainFrame)
+ToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+ToggleBtn.BackgroundTransparency = 1
+ToggleBtn.Text = "STATUS: OFF\n" .. VERSION_TEXT .. " [Q]"
+ToggleBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+ToggleBtn.Font = Enum.Font.GothamBold
+ToggleBtn.TextSize = 11
+
+-- Rainbow Effect
+RunService.RenderStepped:Connect(function()
+    local hue = (tick() % 4) / 4
+    local rainbowColor = Color3.fromHSV(hue, 0.7, 1)
+    MainStroke.Color = rainbowColor
+    if LoginFrame.Visible then LoginStroke.Color = rainbowColor end
+    if GodMode then ToggleBtn.TextColor3 = rainbowColor end
+end)
+
+local function setProperties(char, bool)
+    for _, v in pairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Transparency = bool and 1 or 0
+            v.CanCollide = not bool
+        elseif v:IsA("Decal") then
+            v.Transparency = bool and 1 or 0
+        end
+    end
+end
+
+local function CleanUp()
+    GodMode = false
+    ToggleBtn.Text = "STATUS: OFF\n" .. VERSION_TEXT .. " [Q]"
+    if _G.GodLoop then _G.GodLoop:Disconnect() end
+    
+    local Char = LocalPlayer.Character
+    if Char and Char:FindFirstChild("HumanoidRootPart") and FakeChar then
+        Char.HumanoidRootPart.CFrame = FakeChar.HumanoidRootPart.CFrame
+        Char.HumanoidRootPart.Velocity = FakeChar.HumanoidRootPart.Velocity
+        setProperties(Char, false)
+        if Char:FindFirstChild("Humanoid") then Camera.CameraSubject = Char.Humanoid end
+    end
+    if FakeChar then FakeChar:Destroy(); FakeChar = nil end
+end
+
+local function ToggleGodMode()
+    GodMode = not GodMode
+    local Char = LocalPlayer.Character
+    if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
+    local HRP = Char.HumanoidRootPart
+    local Hum = Char.Humanoid
+
+    if GodMode then
+        ToggleBtn.Text = "STATUS: ON\n" .. VERSION_TEXT .. " [Q]"
+        Char.Archivable = true
+        FakeChar = Char:Clone()
+        FakeChar.Parent = workspace
+        FakeChar.HumanoidRootPart.CFrame = HRP.CFrame
+        setProperties(Char, true)
+        Camera.CameraSubject = FakeChar.Humanoid
+
+        _G.GodLoop = RunService.Heartbeat:Connect(function()
+            if GodMode and FakeChar and Char:FindFirstChild("HumanoidRootPart") then
+                FakeChar.Humanoid:Move(Hum.MoveDirection, false)
+                if Hum.Jump then FakeChar.Humanoid.Jump = true end
+                
+                local fakeHRP = FakeChar.HumanoidRootPart
+                local targetPos = fakeHRP.Position
+                
+                -- نظام الهروب الذكي: إذا نزل الـ Fake لمستوى قريب من الـ Real
+                local currentOffset = Vector3.new(0, 0, 0)
+                if math.abs(fakeHRP.Position.Y - FIXED_HEIGHT) < 5 then
+                    currentOffset = fakeHRP.CFrame.RightVector * OFFSET_DISTANCE
+                end
+                
+                HRP.CFrame = CFrame.new(targetPos.X + currentOffset.X, FIXED_HEIGHT, targetPos.Z + currentOffset.Z)
+                HRP.Velocity = Vector3.zero
+            end
+        end)
+    else
+        CleanUp()
+    end
+end
+
+-- Events
+ToggleBtn.MouseButton1Click:Connect(ToggleGodMode)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if not processed and input.KeyCode == Enum.KeyCode.Q then
+        if MainFrame.Visible then ToggleGodMode() end
+    end
+end)
+
+LoginBtn.MouseButton1Click:Connect(function()
+    if CodeBox.Text == "OMARTSOO-188HOKIJ" then
+        LoginFrame.Visible = false
+        MainFrame.Visible = true
+    else
+        LoginBtn.Text = "INVALID CODE"
+        task.wait(1)
+        LoginBtn.Text = "LOGIN"
+    end
+end)
