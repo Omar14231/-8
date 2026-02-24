@@ -1,53 +1,87 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+
+local UI_NAME = "DeltaGodMode_Final"
+
+-- وظيفة التنظيف ونقل الشخصية بدقة عند الإغلاق
+local function FullCleanUp()
+    if _G.GodLoop then _G.GodLoop:Disconnect(); _G.GodLoop = nil end
+    
+    local Char = LocalPlayer.Character
+    if Char and Char:FindFirstChild("HumanoidRootPart") and _G.CurrentFakeChar then
+        local FakeHRP = _G.CurrentFakeChar:FindFirstChild("HumanoidRootPart")
+        if FakeHRP then
+            -- النقل اللحظي لمكان وسرعة الشخصية المزيفة
+            Char.HumanoidRootPart.CFrame = FakeHRP.CFrame
+            Char.HumanoidRootPart.Velocity = FakeHRP.Velocity 
+        end
+        
+        for _, v in pairs(Char:GetDescendants()) do
+            if v:IsA("BasePart") then v.Transparency = 0; v.CanCollide = true
+            elseif v:IsA("Decal") then v.Transparency = 0 end
+        end
+        
+        if Char:FindFirstChild("Humanoid") then Camera.CameraSubject = Char.Humanoid end
+    end
+    
+    if _G.CurrentFakeChar then 
+        _G.CurrentFakeChar:Destroy()
+        _G.CurrentFakeChar = nil 
+    end
+    _G.GodModeActive = false
+end
+
+if CoreGui:FindFirstChild(UI_NAME) or _G.GodModeActive then
+    FullCleanUp()
+    if CoreGui:FindFirstChild(UI_NAME) then CoreGui[UI_NAME]:Destroy() end
+    task.wait(0.1)
+end
 
 local GodMode = false
 local FakeChar = nil
 local FIXED_HEIGHT = -2.75 
-local VERSION_TEXT = "v1.0"
-local OFFSET_DISTANCE = 4 -- المسافة التي ستبتعدها الشخصية الحقيقية لليمين لتجنب التعليق
+local VERSION_TEXT = "v1.0" -- رجعناها لعيونك
+local OFFSET_DISTANCE = 4 
 
 -- UI Setup
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = UI_NAME
 
 -- Login Frame
 local LoginFrame = Instance.new("Frame", ScreenGui)
-LoginFrame.Size = UDim2.new(0, 280, 0, 180)
+LoginFrame.Size = UDim2.new(0, 280, 0, 200)
 LoginFrame.Position = UDim2.new(0.5, -140, 0.4, 0)
 LoginFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 LoginFrame.Active = true
 LoginFrame.Draggable = true
-local LoginCorner = Instance.new("UICorner", LoginFrame)
+Instance.new("UICorner", LoginFrame)
 local LoginStroke = Instance.new("UIStroke", LoginFrame)
 LoginStroke.Thickness = 2
 
--- Close Button (X)
-local CloseBtn = Instance.new("TextButton", LoginFrame)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -35, 0, 5)
-CloseBtn.Text = "X"
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", CloseBtn)
-CloseBtn.MouseButton1Click:Connect(function() LoginFrame.Visible = false end)
+local TitleLabel = Instance.new("TextLabel", LoginFrame)
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.Position = UDim2.new(0, 0, 0, 10)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "DELTA EXECUTOR\nLOGIN SYSTEM"
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 14
 
-local CodeBox = Instance.new("TextBox", LoginFrame)
+local CodeBox = Instance.new("Enter Access Code...", LoginFrame)
 CodeBox.Size = UDim2.new(0.85, 0, 0, 40)
-CodeBox.Position = UDim2.new(0.075, 0, 0.35, 0)
+CodeBox.Position = UDim2.new(0.075, 0, 0.45, 0)
 CodeBox.PlaceholderText = "Enter Access Code..."
-CodeBox.Text = ""
 CodeBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-CodeBox.Font = Enum.Font.GothamSemibold
 Instance.new("UICorner", CodeBox)
 
 local LoginBtn = Instance.new("TextButton", LoginFrame)
 LoginBtn.Size = UDim2.new(0.85, 0, 0, 35)
-LoginBtn.Position = UDim2.new(0.075, 0, 0.65, 0)
+LoginBtn.Position = UDim2.new(0.075, 0, 0.75, 0)
 LoginBtn.Text = "LOGIN"
 LoginBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -93,23 +127,9 @@ local function setProperties(char, bool)
     end
 end
 
-local function CleanUp()
-    GodMode = false
-    ToggleBtn.Text = "STATUS: OFF\n" .. VERSION_TEXT .. " [Q]"
-    if _G.GodLoop then _G.GodLoop:Disconnect() end
-    
-    local Char = LocalPlayer.Character
-    if Char and Char:FindFirstChild("HumanoidRootPart") and FakeChar then
-        Char.HumanoidRootPart.CFrame = FakeChar.HumanoidRootPart.CFrame
-        Char.HumanoidRootPart.Velocity = FakeChar.HumanoidRootPart.Velocity
-        setProperties(Char, false)
-        if Char:FindFirstChild("Humanoid") then Camera.CameraSubject = Char.Humanoid end
-    end
-    if FakeChar then FakeChar:Destroy(); FakeChar = nil end
-end
-
 local function ToggleGodMode()
     GodMode = not GodMode
+    _G.GodModeActive = GodMode
     local Char = LocalPlayer.Character
     if not Char or not Char:FindFirstChild("HumanoidRootPart") then return end
     local HRP = Char.HumanoidRootPart
@@ -119,6 +139,7 @@ local function ToggleGodMode()
         ToggleBtn.Text = "STATUS: ON\n" .. VERSION_TEXT .. " [Q]"
         Char.Archivable = true
         FakeChar = Char:Clone()
+        _G.CurrentFakeChar = FakeChar
         FakeChar.Parent = workspace
         FakeChar.HumanoidRootPart.CFrame = HRP.CFrame
         setProperties(Char, true)
@@ -130,24 +151,16 @@ local function ToggleGodMode()
                 if Hum.Jump then FakeChar.Humanoid.Jump = true end
                 
                 local fakeHRP = FakeChar.HumanoidRootPart
-                local targetPos = fakeHRP.Position
-                
-                -- نظام الهروب الذكي: إذا نزل الـ Fake لمستوى قريب من الـ Real
-                local currentOffset = Vector3.new(0, 0, 0)
-                if math.abs(fakeHRP.Position.Y - FIXED_HEIGHT) < 5 then
-                    currentOffset = fakeHRP.CFrame.RightVector * OFFSET_DISTANCE
-                end
-                
-                HRP.CFrame = CFrame.new(targetPos.X + currentOffset.X, FIXED_HEIGHT, targetPos.Z + currentOffset.Z)
-                HRP.Velocity = Vector3.zero
+                HRP.Velocity = fakeHRP.Velocity 
+                HRP.CFrame = CFrame.new(fakeHRP.Position.X + OFFSET_DISTANCE, FIXED_HEIGHT, fakeHRP.Position.Z)
             end
         end)
     else
-        CleanUp()
+        ToggleBtn.Text = "STATUS: OFF\n" .. VERSION_TEXT .. " [Q]"
+        FullCleanUp()
     end
 end
 
--- Events
 ToggleBtn.MouseButton1Click:Connect(ToggleGodMode)
 
 UserInputService.InputBegan:Connect(function(input, processed)
