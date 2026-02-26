@@ -36,78 +36,22 @@ end
 local GodMode = false
 local FakeChar = nil
 local FIXED_HEIGHT = -2.75 
-local VERSION_TEXT = "v1.0"
 local OFFSET_DISTANCE = 4 
 
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 ScreenGui.Name = UI_NAME
 
--- [ واجهة التحكم الرئيسية ] --
+-- [ واجهة التحكم الرئيسية - تظهر فوراً ] --
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 110, 0, 50) 
 MainFrame.Position = UDim2.new(0.9, -110, 0.2, 0) 
 MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-MainFrame.Visible = false
+MainFrame.Visible = true -- جعلناها مرئية مباشرة
 MainFrame.Active = true
 MainFrame.Draggable = true 
+
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Thickness = 3
-
--- [ واجهة تسجيل الدخول ] --
-local LoginFrame = Instance.new("Frame", ScreenGui)
-LoginFrame.Size = UDim2.new(0, 280, 0, 200)
-LoginFrame.Position = UDim2.new(0.5, -140, 0.4, 0)
-LoginFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-LoginFrame.Active = true
-LoginFrame.Draggable = true
-Instance.new("UICorner", LoginFrame)
-local LoginStroke = Instance.new("UIStroke", LoginFrame)
-LoginStroke.Thickness = 2
-
-local TitleLabel = Instance.new("TextLabel", LoginFrame)
-TitleLabel.Size = UDim2.new(1, 0, 0, 40)
-TitleLabel.Position = UDim2.new(0, 0, 0, 10)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "DELTA EXECUTOR\nLOGIN SYSTEM"
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 14
-
-local CodeBox = Instance.new("TextBox", LoginFrame)
-CodeBox.Size = UDim2.new(0.85, 0, 0, 40)
-CodeBox.Position = UDim2.new(0.075, 0, 0.45, 0)
-CodeBox.PlaceholderText = "Write code here"
-CodeBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-CodeBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", CodeBox)
-
-local LoginBtn = Instance.new("TextButton", LoginFrame)
-LoginBtn.Size = UDim2.new(0.85, 0, 0, 35)
-LoginBtn.Position = UDim2.new(0.075, 0, 0.75, 0)
-LoginBtn.Text = "LOGIN"
-LoginBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-LoginBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoginBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", LoginBtn)
-
--- [ ميزة التخطي الخاصة بك ] --
-if LocalPlayer.Name == "hhjjkkllpppp098" then
-    LoginBtn.Size = UDim2.new(0.4, 0, 0, 35)
-    
-    local SkipBtn = Instance.new("TextButton", LoginFrame)
-    SkipBtn.Size = UDim2.new(0.4, 0, 0, 35)
-    SkipBtn.Position = UDim2.new(0.525, 0, 0.75, 0)
-    SkipBtn.Text = "SKIP"
-    SkipBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 255) -- لون سماوي مميز
-    SkipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SkipBtn.Font = Enum.Font.GothamBold
-    Instance.new("UICorner", SkipBtn)
-
-    SkipBtn.MouseButton1Click:Connect(function()
-        LoginFrame.Visible = false
-        MainFrame.Visible = true
-    end)
-end
 
 -- [ زر الحالة ] --
 local ToggleBtn = Instance.new("TextButton", MainFrame)
@@ -122,7 +66,6 @@ RunService.RenderStepped:Connect(function()
     local hue = (tick() % 4) / 4
     local rainbowColor = Color3.fromHSV(hue, 0.7, 1)
     MainStroke.Color = rainbowColor
-    if LoginFrame.Visible then LoginStroke.Color = rainbowColor end
     if GodMode then ToggleBtn.TextColor3 = rainbowColor end
 end)
 
@@ -173,19 +116,9 @@ end
 
 ToggleBtn.MouseButton1Click:Connect(ToggleGodMode)
 
+-- اختصار الكيبورد للحاسوب (اختياري)
 UserInputService.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.Q then
         if MainFrame.Visible then ToggleGodMode() end
-    end
-end)
-
-LoginBtn.MouseButton1Click:Connect(function()
-    if CodeBox.Text == "OMARTSOO-188HOKIJ" then
-        LoginFrame.Visible = false
-        MainFrame.Visible = true
-    else
-        LoginBtn.Text = "WRONG CODE"
-        task.wait(1)
-        LoginBtn.Text = "LOGIN"
     end
 end)
